@@ -78,15 +78,19 @@ const IMITATES = /\b(inspired by|sounds like|in the style of|channel(?:l)?ing)\b
 const EXPERT = /\b(as (a|your) (doctor|physician|lawyer|attorney|financial advis[eo]r|therapist)|medical advice|legal advice|financial advice|investment advice)\b/i;
 const CAMPAIGN = /\b(vote (for|against)|elect(ing)? |re-?elect|campaign(ing)? for|support (the )?(candidate|party))\b/i;
 
-function textChecks(where, s, { example = false } = {}) {
+// selling: links, @mentions and hashtags break the creator rules; in a voice for the
+// user's own replies they are their call (promotion is fine there) - worth a look only.
+function textChecks(where, s, { example = false, selling = false } = {}) {
   if (EM_DASH.test(s)) warn(`${where}: has an em dash (—) - use a hyphen, comma or full stop: "${short(s)}"`);
   if (STOCK.test(s)) warn(`${where}: stock word "${s.match(STOCK)[0]}" reads as AI: "${short(s)}"`);
   if (RESULT.test(s)) warn(`${where}: invented-sounding result "${s.match(RESULT)[0]}" - the AI would claim it in the user's name: "${short(s)}"`);
   if (SENSITIVE.test(s)) warn(`${where}: "${s.match(SENSITIVE)[0]}" - a voice describes how someone writes, never health, beliefs, origin or orientation: "${short(s)}"`);
   if (!example) return;
-  if (LINK.test(s)) err(`${where}: has a link: "${short(s)}"`);
-  if (MENTION.test(s)) err(`${where}: has an @mention: "${short(s)}"`);
-  if (HASHTAG.test(s)) err(`${where}: has a hashtag: "${short(s)}"`);
+  const promo = selling ? err : warn;
+  const why = selling ? '' : ' - fine if the voice is meant to promote it, but not in every reply';
+  if (LINK.test(s)) promo(`${where}: has a link${why}: "${short(s)}"`);
+  if (MENTION.test(s)) promo(`${where}: has an @mention${why}: "${short(s)}"`);
+  if (HASHTAG.test(s)) promo(`${where}: has a hashtag${why}: "${short(s)}"`);
   if (s.length > 280) err(`${where}: ${s.length} characters - keep it under 280: "${short(s)}"`);
   if (LABEL.test(s)) warn(`${where}: opens with a label ("${s.match(LABEL)[1]}") - reads as AI: "${short(s)}"`);
   if (PRAISE.test(s)) warn(`${where}: opens with praise - reads as AI: "${short(s)}"`);
@@ -96,7 +100,7 @@ function textChecks(where, s, { example = false } = {}) {
 
 // ---- a voice -----------------------------------------------------------------------------------
 
-function checkVoice(name, voice) {
+function checkVoice(name, voice, selling = false) {
   if (typeof name !== 'string' || !name.trim()) err('name: missing.');
   else if (name.length > 24) err(`name: ${name.length} characters - Tonally keeps 24: "${name}"`);
   if (!voice || typeof voice !== 'object' || Array.isArray(voice)) {
@@ -120,7 +124,7 @@ function checkVoice(name, voice) {
       if (typeof line !== 'string') return err(`voice.${f}[${i + 1}]: should be text.`);
       if (line.length > 600) err(`voice.${f}[${i + 1}]: ${line.length} characters - Tonally keeps 600.`);
       // The don't list names the bad patterns on purpose.
-      if (f !== 'dontList') textChecks(`voice.${f}[${i + 1}]`, line, { example: f === 'examples' });
+      if (f !== 'dontList') textChecks(`voice.${f}[${i + 1}]`, line, { example: f === 'examples', selling });
     });
   }
   const has = (f) => (Array.isArray(voice[f]) ? voice[f].length > 0 : Boolean(String(voice[f] || '').trim()));
@@ -167,7 +171,7 @@ function checkListing(listing, voice) {
     const where = `listing.samples[${i + 1}]`;
     if (!String(s?.reply || '').trim()) return err(`${where}.reply: missing.`);
     if (String(s.post || '').length > 280) err(`${where}.post: longer than 280 characters.`);
-    textChecks(`${where}.reply`, String(s.reply), { example: true });
+    textChecks(`${where}.reply`, String(s.reply), { example: true, selling: true });
     if (examples.has(String(s.reply).trim().toLowerCase())) err(`${where}.reply: the same as one of the voice's examples - write new ones.`);
   });
   const all = [name, d, ...tags, ...samples.flatMap((s) => [s?.post, s?.reply]), JSON.stringify(voice || {})].join('\n');
@@ -191,7 +195,7 @@ export function check(data) {
   if (!data.format) warn('format: missing - add "format": "tonally-voice".');
   if (data.version !== undefined && data.version !== 1) warn(`version: ${data.version} - expected 1.`);
   const selling = data.format === 'tonally-voice-submission';
-  checkVoice(data.name, data.voice);
+  checkVoice(data.name, data.voice, selling);
   if (selling) checkListing(data.listing, data.voice);
   return { errors, warnings, selling };
 }

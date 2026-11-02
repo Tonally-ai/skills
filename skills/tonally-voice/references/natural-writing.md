@@ -37,7 +37,8 @@ out of the voice.
 ## Examples
 
 Write 5 to 8 new example replies that show the rhythm. Vary length and opening. Each must make
-sense as an answer to some post, under 280 characters, with no links, @mentions or hashtags.
+sense as an answer to some post, under 280 characters. Links, @mentions and hashtags only where
+the voice is meant to promote something - and then in some replies, not every one.
 
 | Reads as AI | Reads as a person |
 | --- | --- |

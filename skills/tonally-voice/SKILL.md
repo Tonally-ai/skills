@@ -45,8 +45,9 @@ For a voice **to sell**, also ask: who would buy it, and in which situations wou
   political or religious beliefs, ethnic origin, sexual orientation, union membership or crimes.
 - Write 5 to 8 NEW example replies. Never copy or lightly reword the samples, posts on X or
   anything else.
-- No links, no @mentions, no hashtags of the user's accounts or products, and no instruction to
-  promote anything.
+- Promoting is the user's call: a voice may mention their product, newsletter or account, with
+  links, @mentions or hashtags, if they want it to. Say in the rules when it should - "only when
+  someone asks for a tool" reads far better than every reply.
 - If asked for the voice of a real, named person other than the user, say no - Tonally does not
   allow that. A made-up persona, or a style described in general terms, is fine.
 - For a voice to sell, the creator rules in `references/selling.md` apply on top - above all: no
