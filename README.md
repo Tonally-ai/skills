@@ -3,7 +3,7 @@
 Skills for AI coding agents (Claude Code, Cursor, Codex, Gemini CLI, GitHub Copilot and others) that work with [Tonally](https://tonal.ly), the Chrome add-on that suggests replies on X in your own voice.
 
 ```
-npx skills add Tonally-ai/tonally-skills
+npx skills add Tonally-ai/skills
 ```
 
 Then ask your agent: *"Make me a Tonally voice."*
