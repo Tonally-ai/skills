@@ -127,18 +127,28 @@ and the limits in the template above.
 
 ## 7. Hand it over
 
-For a voice for themselves:
+The quickest way is a one-click link. Once the check passes, run:
+
+```
+node scripts/check-voice.mjs link <the file>
+```
+
+It prints a `https://tonal.ly/add-voice#…` link with the voice inside it (after the `#`, which
+browsers never send to a server). Give the user the link, and offer to open it in their browser
+(`open` on macOS, `start` on Windows, `xdg-open` on Linux). The page shows the voice; **Add to
+Tonally** hands it to Tonally in Chrome, which shows it once more and adds it when they agree.
+For a voice to sell, the listing comes along and fills in the Sell your voice form.
+
+Without the link (no Node, or another browser), they paste the file instead:
 
 1. Open Tonally's settings → **Voice Profile** → **Add a voice from text**.
 2. Paste the whole file, from `{` to `}`.
 3. Pick the voice, or give it to one of their accounts under **Accounts**.
 
-For a voice to sell:
-
-1. Add it the same way (**Voice Profile → Add a voice from text**), and try it on x.com.
-2. Then **Marketplace → Sell your voice**: set up payouts once, pick the voice, and copy the
-   listing's name, description, tags and sample replies into the form.
-3. Tonally reviews it; approved, it is on sale at once.
+For a voice to sell, after adding it: try it on x.com, then **Marketplace → Sell your voice**
+(set up payouts once). With the link, the form is already filled in from the listing; without
+it, copy the listing's name, description, tags and sample replies into the form. Tonally reviews
+the voice; approved, it is on sale at once.
 
 Offer to copy the file to the clipboard (`pbcopy` on macOS, `clip` on Windows, `xclip` or
 `wl-copy` on Linux) - only if they say yes. They can edit the voice in Tonally at any time.

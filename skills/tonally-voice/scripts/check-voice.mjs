@@ -8,6 +8,7 @@
 //   node check-voice.mjs <tonally-export.json>        lists the voices in a Tonally export
 //   node check-voice.mjs extract <export> "<name>" [out.json]
 //                                                     writes one voice of an export as a voice file
+//   node check-voice.mjs link <file>                  an "Add to Tonally" link for a voice that passes
 //
 // Exit code 1 when something must be fixed; warnings alone exit 0. The checks are
 // exported too (check, voicesIn, voiceFile), so they can be tested without Node.
@@ -21,6 +22,26 @@ let warnings = [];
 const err = (m) => errors.push(m);
 const warn = (m) => warnings.push(m);
 const short = (s, n = 70) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
+
+// "Add to Tonally": tonal.ly/add-voice reads the voice from the link's # part - which
+// browsers never send to the server - as "v1." and the file, deflated and base64url-encoded.
+export const ADD_URL = 'https://tonal.ly/add-voice';
+
+// The link for a voice file's data, or null if it does not pass the check.
+export async function voiceLink(data) {
+  if (check(data).errors.length) return null;
+  const bytes = new TextEncoder().encode(JSON.stringify(data));
+  let packed;
+  if (typeof CompressionStream === 'function') {
+    const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate'));
+    packed = new Uint8Array(await new Response(stream).arrayBuffer());
+  } else {
+    packed = new Uint8Array((await import('node:zlib')).deflateSync(bytes));
+  }
+  let bin = '';
+  for (let i = 0; i < packed.length; i += 0x8000) bin += String.fromCharCode(...packed.subarray(i, i + 0x8000));
+  return `${ADD_URL}#v1.${btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')}`;
+}
 
 // The JSON in a file's text - also an answer pasted with words around it (the
 // outermost { ... }). null when there is none.
@@ -206,8 +227,16 @@ async function main(args) {
     return data ? [data, ''] : [null, `${path} is not valid JSON.`];
   };
   if (!args.length || args[0] === '-h' || args[0] === '--help') {
-    console.log('Usage: node check-voice.mjs <voice file | tonally export>\n       node check-voice.mjs extract <export> "<name>" [out.json]');
+    console.log('Usage: node check-voice.mjs <voice file | tonally export>\n       node check-voice.mjs extract <export> "<name>" [out.json]\n       node check-voice.mjs link <voice file>');
     return args.length ? 0 : 1;
+  }
+  if (args[0] === 'link') {
+    const [data, problem] = read(args[1] || '');
+    if (!data) return console.error(`✗ ${problem}`), 1;
+    const url = await voiceLink(data);
+    if (!url) return console.error('✗ The voice does not pass the check yet - run: node check-voice.mjs <file>'), 1;
+    console.log(url);
+    return 0;
   }
   if (args[0] === 'extract') {
     const [data, problem] = read(args[1]);
