@@ -9,9 +9,12 @@
 //   node check-voice.mjs extract <export> "<name>" [out.json]
 //                                                     writes one voice of an export as a voice file
 //   node check-voice.mjs link <file>                  an "Add to Tonally" link for a voice that passes
+//   node check-voice.mjs replies <file>               a batch of test replies: one per line, a JSON
+//                                                     list, or the skill's "Post: … / Reply: …" form
 //
 // Exit code 1 when something must be fixed; warnings alone exit 0. The checks are
-// exported too (check, voicesIn, voiceFile), so they can be tested without Node.
+// exported too (check, checkReplies, repliesIn, shapeOf, voicesIn, voiceFile), so they can
+// be tested without Node.
 
 const TEXT_FIELDS = ['summary', 'industry', 'emojiPolicy', 'replyGuidelines', 'postGuidelines', 'quoteGuidelines', 'extraContext'];
 const LIST_FIELDS = ['toneTraits', 'styleRules', 'vocabulary', 'doList', 'dontList', 'examples'];
@@ -77,6 +80,16 @@ const SENSITIVE = /\b(diagnos\w*|adhd|autis\w*|depress\w*|anxiety disorder|bipol
 const IMITATES = /\b(inspired by|sounds like|in the style of|channel(?:l)?ing)\b/i;
 const EXPERT = /\b(as (a|your) (doctor|physician|lawyer|attorney|financial advis[eo]r|therapist)|medical advice|legal advice|financial advice|investment advice)\b/i;
 const CAMPAIGN = /\b(vote (for|against)|elect(ing)? |re-?elect|campaign(ing)? for|support (the )?(candidate|party))\b/i;
+// A question tacked on at the end to get engagement ("What do you think?", "Thoughts?").
+const CLOSER = /(?:what do you think|thoughts\?|agree\?|who else|let me know)\W*$/i;
+// A whole reply that would fit under any post (references/what-x-rewards.md).
+const GENERIC = /^\s*(so true|this|this\.|facts|100%|agreed|great (post|thread|point|take)|well said|love (this|it)|nailed it|exactly|underrated|based|wow|same|w|huge|let'?s go+|gm|congrats!*)[\s!.🔥💯🙌👏]*$/i;
+// A semicolon - not the wink in ";)".
+const SEMICOLON = /;(?!-?[()DPp])/;
+
+// What everyday replies on X look like (references/natural-writing.md). Numbers vary by niche;
+// these give a sense of scale.
+const REAL = { median: 26, under40: 70, multi: 10, stop: 6, ask: 7 };
 
 // selling: links, @mentions and hashtags break the creator rules; in a voice for the
 // user's own replies they are their call (promotion is fine there) - worth a look only.
@@ -92,10 +105,49 @@ function textChecks(where, s, { example = false, selling = false } = {}) {
   if (MENTION.test(s)) promo(`${where}: has an @mention${why}: "${short(s)}"`);
   if (HASHTAG.test(s)) promo(`${where}: has a hashtag${why}: "${short(s)}"`);
   if (s.length > 280) err(`${where}: ${s.length} characters - keep it under 280: "${short(s)}"`);
+  if (GENERIC.test(s)) warn(`${where}: fits under any post ("${short(s)}") - X's reply scoring flags replies like that as spam, and many users sending it reads as copy-paste: answer something in the post.`);
   if (LABEL.test(s)) warn(`${where}: opens with a label ("${s.match(LABEL)[1]}") - reads as AI: "${short(s)}"`);
   if (PRAISE.test(s)) warn(`${where}: opens with praise - reads as AI: "${short(s)}"`);
   if (NOT_BUT.test(s)) warn(`${where}: "not X, it's Y" line - reads as AI: "${short(s)}"`);
   if (MEME.test(s)) warn(`${where}: stock meme format "${s.match(MEME)[1]}": "${short(s)}"`);
+  if (CLOSER.test(s)) warn(`${where}: ends on an engagement question - reads as AI: "${short(s)}"`);
+  // Text copied from X keeps HTML entities ("&amp;"), whose ";" is not a semicolon.
+  if (SEMICOLON.test(s.replace(/&(?:[a-z]+|#\d+);/gi, ' '))) warn(`${where}: a semicolon - under 1% of real replies have one: "${short(s)}"`);
+}
+
+// ---- the shape of a set of replies ----------------------------------------------------------
+// Examples - or a batch of test replies - that are all long and polished teach the AI to
+// write every reply that way. The shape gives a voice away before any single word does.
+
+const sentences = (s) => (s.trim().replace(/[.!?]+$/, '').match(/[.!?]+\s/g) || []).length + 1;
+const median = (xs) => {
+  const v = [...xs].sort((a, b) => a - b);
+  const m = v.length >> 1;
+  return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2;
+};
+
+// { n, median, under40, multi, stop, ask } - shares in % - for a list of replies.
+export function shapeOf(list) {
+  const n = list.length;
+  const pct = (f) => (n ? Math.round((100 * list.filter(f).length) / n) : 0);
+  return {
+    n,
+    median: n ? Math.round(median(list.map((s) => s.trim().length))) : 0,
+    under40: pct((s) => s.trim().length < 40),
+    multi: pct((s) => sentences(s) > 1),
+    stop: pct((s) => /\.\s*$/.test(s)),
+    ask: pct((s) => s.includes('?')),
+  };
+}
+
+function shapeChecks(where, list) {
+  if (list.length < 5) return;
+  const s = shapeOf(list);
+  if (!list.some((x) => x.trim().length < 40)) warn(`${where}: none under 40 characters - ${REAL.under40}% of real replies are; add 2 or 3 of only a few words.`);
+  if (s.median > 80) warn(`${where}: median ${s.median} characters - real replies run about ${REAL.median}, and the AI copies the length.`);
+  if (s.multi > 50) warn(`${where}: ${s.multi}% have two or more sentences - about ${REAL.multi}% of real replies do; make one sentence the default.`);
+  if (s.stop >= 75) warn(`${where}: ${s.stop}% end with a full stop - about ${REAL.stop}% of real replies do; drop it on short ones.`);
+  if (s.ask > 50) warn(`${where}: ${s.ask}% ask a question - about ${REAL.ask}% of real replies do; keep questions for when they are real.`);
 }
 
 // ---- a voice -----------------------------------------------------------------------------------
@@ -132,6 +184,10 @@ function checkVoice(name, voice, selling = false) {
   if (!has('toneTraits')) err('voice.toneTraits: missing.');
   if (!has('styleRules')) err('voice.styleRules: missing.');
   else if (voice.styleRules.length < 4) warn(`voice.styleRules: only ${voice.styleRules.length} - concrete habits (length, punctuation, capitalisation) make the voice consistent.`);
+  const saysLength = (r) => typeof r === 'string' && /\b(characters?|chars|words?|sentences?|short|long|length|brief)\b/i.test(r.replace(/sentence[- ]case/gi, ''));
+  if (Array.isArray(voice.styleRules) && voice.styleRules.length && !voice.styleRules.some(saysLength)) {
+    warn('voice.styleRules: none says how long replies are - give a mix, e.g. "about half under 40 characters, the rest one sentence".');
+  }
 
   const vocab = Array.isArray(voice.vocabulary) ? voice.vocabulary : [];
   if (vocab.length > 5) warn(`voice.vocabulary: ${vocab.length} entries - the AI reaches for every one of them; keep a few plain words.`);
@@ -147,6 +203,7 @@ function checkVoice(name, voice, selling = false) {
   const firsts = {};
   for (const e of ex) { const w = (e.trim().split(/\s+/)[0] || '').toLowerCase().replace(/[^a-z']/g, ''); if (w) firsts[w] = (firsts[w] || 0) + 1; }
   for (const [w, n] of Object.entries(firsts)) if (n >= 3) warn(`voice.examples: ${n} start with "${w}" - vary the openings.`);
+  shapeChecks('voice.examples', ex);
 }
 
 // ---- a listing (voice to sell) ------------------------------------------------------------------
@@ -200,6 +257,53 @@ export function check(data) {
   return { errors, warnings, selling };
 }
 
+// A batch of test replies (step 4 of the skill), or a user's own replies: each checked like an
+// example, then the batch for its shape and for openings and phrases it keeps repeating.
+// { errors, warnings, shape }.
+export function checkReplies(list) {
+  errors = [];
+  warnings = [];
+  // Replies copied from X start with the @handles they answer - not part of what was written.
+  const replies = list.map((r) => String(r).trim().replace(/^(?:@\w+\s+)+/, '')).filter(Boolean);
+  replies.forEach((r, i) => textChecks(`reply ${i + 1}`, r, { example: true }));
+  shapeChecks('replies', replies);
+  const firsts = {};
+  for (const r of replies) { const w = (r.split(/\s+/)[0] || '').toLowerCase().replace(/[^a-z']/g, ''); if (w) firsts[w] = (firsts[w] || 0) + 1; }
+  for (const [w, n] of Object.entries(firsts)) if (n >= 3 && n / replies.length > 0.25) warn(`replies: ${n} of ${replies.length} start with "${w}" - vary the openings.`);
+  const grams = {};
+  for (const r of replies) {
+    const words = r.toLowerCase().match(/[a-z']+/g) || [];
+    const seen = new Set();
+    for (let i = 0; i + 2 < words.length; i++) seen.add(words.slice(i, i + 3).join(' '));
+    for (const g of seen) grams[g] = (grams[g] || 0) + 1;
+  }
+  Object.entries(grams).filter(([, n]) => n >= 3 && n >= replies.length / 8).sort((a, b) => b[1] - a[1]).slice(0, 3)
+    .forEach(([g, n]) => warn(`replies: "${g}" in ${n} of them - a phrase the voice keeps reaching for.`));
+  const dupes = replies.length - new Set(replies.map((r) => r.toLowerCase())).size;
+  if (dupes) warn(`replies: ${dupes} repeated word for word.`);
+  return { errors, warnings, shape: shapeOf(replies) };
+}
+
+// The replies in a file's text: a JSON list (of replies, or of { post, reply }), text in the
+// skill's "Post: … / Reply: …" form (a reply runs to the next "Post:" or blank line), or one
+// reply per line.
+export function repliesIn(text) {
+  let data = null;
+  try { data = JSON.parse(text); } catch { /* not JSON */ }
+  if (Array.isArray(data)) return data.map((x) => (x && typeof x === 'object' ? x.reply : x)).filter((x) => typeof x === 'string' && x.trim());
+  const lines = String(text).split(/\r?\n/);
+  if (!lines.some((l) => /^\s*reply\s*:/i.test(l))) return lines.map((l) => l.trim()).filter(Boolean);
+  const out = [];
+  let cur = null;
+  for (const l of lines) {
+    if (/^\s*reply\s*:/i.test(l)) { if (cur !== null) out.push(cur); cur = l.replace(/^\s*reply\s*:\s*/i, ''); }
+    else if (/^\s*post\s*:/i.test(l) || !l.trim()) { if (cur !== null) out.push(cur); cur = null; }
+    else if (cur !== null) cur += `\n${l}`;
+  }
+  if (cur !== null) out.push(cur);
+  return out.map((r) => r.trim()).filter(Boolean);
+}
+
 const fromPosts = (p) => ['import', 'corpus'].includes(p?.source) || p?.fromPosts === true;
 
 // The voices in a Tonally export (License & Advanced -> Data -> Export settings +
@@ -231,8 +335,21 @@ async function main(args) {
     return data ? [data, ''] : [null, `${path} is not valid JSON.`];
   };
   if (!args.length || args[0] === '-h' || args[0] === '--help') {
-    console.log('Usage: node check-voice.mjs <voice file | tonally export>\n       node check-voice.mjs extract <export> "<name>" [out.json]\n       node check-voice.mjs link <voice file>');
+    console.log('Usage: node check-voice.mjs <voice file | tonally export>\n       node check-voice.mjs extract <export> "<name>" [out.json]\n       node check-voice.mjs link <voice file>\n       node check-voice.mjs replies <file of replies>');
     return args.length ? 0 : 1;
+  }
+  if (args[0] === 'replies') {
+    if (!fs.existsSync(args[1] || '')) return console.error(`✗ No file at ${args[1] || '(none given)'}.`), 1;
+    const list = repliesIn(fs.readFileSync(args[1], 'utf8'));
+    if (!list.length) return console.error(`✗ No replies in ${args[1]} - one per line, or "Reply: …" lines.`), 1;
+    const res = checkReplies(list);
+    const s = res.shape;
+    console.log(`${s.n} replies, real replies in brackets: median ${s.median} characters (${REAL.median}) · under 40 characters ${s.under40}% (${REAL.under40}%) · two or more sentences ${s.multi}% (${REAL.multi}%) · full stop at the end ${s.stop}% (${REAL.stop}%) · a question ${s.ask}% (${REAL.ask}%)`);
+    for (const m of res.errors) console.log(`✗ ${m}`);
+    for (const m of res.warnings) console.log(`! ${m}`);
+    if (s.n < 5) console.log('! Under 5 replies - too few to judge their shape; 8 to 10 work best.');
+    if (!res.errors.length) console.log(`✓ ${s.n} replies checked${res.warnings.length ? ` - ${res.warnings.length} thing${res.warnings.length === 1 ? '' : 's'} worth a look` : ''}.`);
+    return res.errors.length ? 1 : 0;
   }
   if (args[0] === 'link') {
     const [data, problem] = read(args[1] || '');

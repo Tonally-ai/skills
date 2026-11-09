@@ -29,8 +29,8 @@ Every voice is reviewed before it goes on sale. The full rules: https://tonal.ly
 - A clear niche and situation: who it suits, and when it fits ("calm replies that slow a heated
   thread down").
 - A name that says what it does, not who it copies: "Calm coach", "Numbers nerd".
-- Sample replies that show range: one agreeing, one pushing back, one light. Buyers decide on
-  these.
+- Sample replies that show range: one agreeing, one pushing back, one light - and at least one
+  only a few words long. Buyers decide on these.
 - Rules specific enough that every buyer gets the same voice.
 
 ## The listing

@@ -30,12 +30,18 @@ Ask these one or two at a time and wait for the answers. Skip what the user alre
 1. Who is the voice - what does this person or persona do, and who are they talking to?
 2. Which topics do they post and reply about?
 3. How do they sound? (for example dry, warm, punchy, nerdy, playful, blunt)
-4. How long are their replies, and how do they use capital letters, punctuation, emojis and hashtags?
+4. How long are their replies - mostly a few words, or fuller answers - and does that change by
+   situation (a big account's post, a friend's, a question)? How do they use capital letters,
+   punctuation, emojis and hashtags?
 5. Words or phrases they use a lot - and ones they would never use.
 6. How do they reply to others: agree and add, challenge, joke, ask a question?
 7. Optional: things they wrote - pasted into the chat, or files and folders they point you to
    (notes, blog posts, newsletters). Read only the files they point you to, and learn the *style*
    from them - length, rhythm, punctuation, vocabulary, how they open and close - not the content.
+   If they include replies, save them to a file, one per line, and run
+   `node scripts/check-voice.mjs replies <that file>`: its first line gives their typical length,
+   full stops and questions, to write into the rules as numbers. Keep reply habits apart from post
+   habits - posts usually run several times longer.
 
 For a voice **to sell**, also ask: who would buy it, and in which situations would they use it?
 
@@ -47,7 +53,8 @@ For a voice **to sell**, also ask: who would buy it, and in which situations wou
   anything else.
 - Promoting is the user's call: a voice may mention their product, newsletter or account, with
   links, @mentions or hashtags, if they want it to. Say in the rules when it should - "only when
-  someone asks for a tool" reads far better than every reply.
+  someone asks for a tool" reads far better than every reply. Of eight founders whose replies we
+  looked at, the typical one mentioned their own company in about one reply in four.
 - If asked for the voice of a real, named person other than the user, say no - Tonally does not
   allow that. A made-up persona, or a style described in general terms, is fine.
 - For a voice to sell, the creator rules in `references/selling.md` apply on top - above all: no
@@ -59,13 +66,24 @@ Read `references/natural-writing.md` and follow it. In short: rules concrete eno
 stranger could imitate the voice from them alone; a short, plain vocabulary (no catchphrases);
 no poster lines like "hire slow, fire fast" or "it's not X, it's Y"; no "Pro tip:" labels or
 "Great point!" openers; no invented personal results like "saved me months"; examples that vary
-in length and opening and pick up a detail from the post they answer.
+in length and opening and pick up a detail from the post they answer. And the shape of real
+replies: a length mix rather than one range, 2 or 3 examples of only a few words, one sentence
+by default, and different kinds of reply rather than the same move every time.
+
+Then read `references/what-x-rewards.md`: what X's own code does with a reply. It comes down to
+replies that only make sense under the post they answer, wording that never repeats from reply to
+reply, no dunking, and no links or @mentions by default.
 
 ## 4. Test it before saving
 
-Write replies in the voice to 4 or 5 made-up posts in the user's niche - posts you invent, not
+Write replies in the voice to 8 to 10 made-up posts in the user's niche - posts you invent, not
 real ones from X. Mix the situations: a question, a take to agree with, one to push back on, a
-frustrated post, something light. Show them as `Post: …` / `Reply: …`.
+frustrated post, something light, and a couple where a few words is the right reply. Show them as
+`Post: …` / `Reply: …`.
+
+Save them to a file in that same form and run `node scripts/check-voice.mjs replies <that file>`.
+It flags a batch that is all long, all one shape or keeps opening the same way - patterns no
+single reply shows. Fix the rules behind anything it flags before showing the user.
 
 Ask the user to point at anything that does not sound like them (or, for a voice to sell, like
 the voice they want). Fix the **rules** that caused it, not just that one reply, and test again.
@@ -84,7 +102,7 @@ For a voice **for themselves** (or one improved for their own use):
     "summary": "2-4 sentences: how this voice writes",
     "industry": "the niche and topics",
     "toneTraits": ["short tone words"],
-    "styleRules": ["concrete habits: length, punctuation, capitalisation, slang"],
+    "styleRules": ["concrete habits: a length mix, punctuation, capitalisation, slang"],
     "vocabulary": ["a few plain words it uses"],
     "emojiPolicy": "how emojis, hashtags and links are used",
     "replyGuidelines": "how it replies to others: angle, humour, how pointed",
@@ -92,7 +110,7 @@ For a voice **for themselves** (or one improved for their own use):
     "quoteGuidelines": "how it writes quote posts",
     "doList": ["things to do"],
     "dontList": ["things never to do"],
-    "examples": ["5 to 8 new example replies, each under 280 characters"]
+    "examples": ["5 to 8 new example replies, each under 280 characters - 2 or 3 of only a few words"]
   }
 }
 ```
@@ -121,7 +139,8 @@ node scripts/check-voice.mjs <the file>
 ```
 
 It checks the file against the limits Tonally applies, and flags what reads as machine-written
-or breaks the creator rules. Fix every `✗`. Look at each `!` and fix it unless there is a good
+or breaks the creator rules - including examples that are all long, all two sentences or all
+ending in a full stop. Fix every `✗`. Look at each `!` and fix it unless there is a good
 reason (for example, the user really does say that phrase). Run it again until it ends with `✓`.
 If Node is not available, go through the same points by hand: `references/natural-writing.md`,
 and the limits in the template above.
@@ -157,4 +176,6 @@ Offer to copy the file to the clipboard (`pbcopy` on macOS, `clip` on Windows, `
 ## Good to know
 
 - The voice stays in the user's browser, like every voice in Tonally.
+- A few good replies a day do more than many fast ones: X reads how many replies an account sends
+  and at what pace (`references/what-x-rewards.md`).
 - Creator rules: https://tonal.ly/creators · Format reference: https://tonal.ly/voice-format
