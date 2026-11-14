@@ -178,4 +178,4 @@ Offer to copy the file to the clipboard (`pbcopy` on macOS, `clip` on Windows, `
 - The voice stays in the user's browser, like every voice in Tonally.
 - A few good replies a day do more than many fast ones: X reads how many replies an account sends
   and at what pace (`references/what-x-rewards.md`).
-- Creator rules: https://tonal.ly/creators · Format reference: https://tonal.ly/voice-format
+- Creator rules: https://tonal.ly/creators
