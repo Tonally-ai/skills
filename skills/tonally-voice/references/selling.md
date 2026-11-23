@@ -14,8 +14,8 @@ Every voice is reviewed before it goes on sale. The full rules: https://tonal.ly
 - **Original lines only.** Examples and sample replies are newly written for this voice. Nothing
   copied from X - the creator's own posts included - or from anywhere else.
 - **Never from imported posts.** A voice Tonally built from an account's imported posts cannot be
-  sold, nor can a copy of one. In an export file these have `"source": "import"` or
-  `"source": "corpus"`, or `"fromPosts": true`. Write the voice from scratch instead.
+  sold, nor can a copy of one. A voice file copied out of Tonally says so with `"fromPosts": true`
+  (keep that line whenever you rework such a voice). Write a voice to sell from scratch instead.
 - **Nothing deceptive.** No posing as a happy customer, no spam or engagement bait, no hidden
   promotion, no links, hashtags or mentions added to every reply.
 - **Nothing harmful.** No hateful, harassing, sexual or violent content, nothing aimed at minors.

@@ -6,9 +6,9 @@ description: Create, improve or prepare for sale a writing voice for Tonally, th
 # Make a Tonally voice
 
 Tonally writes reply suggestions on X in a *voice*: a description of how someone writes, which
-an AI model follows for every reply. You help the user make one and save it as a file they paste
-into Tonally under **Settings → Voice Profile → Add a voice from text**. Everything in the file
-is what Tonally reads; it takes nothing else.
+an AI model follows for every reply. You help the user make one, save it as a file and hand it
+to Tonally with a one-click link - or they paste the file in under **Settings → Voice Profile →
++ New voice → Generate Voice**. Everything in the file is what Tonally reads; it takes nothing else.
 
 ## 0. Which kind of voice
 
@@ -17,11 +17,12 @@ Ask first, in one question, unless the user already said:
 - **For themselves** - a voice that writes like them, or like a persona, for their own replies.
 - **To sell** - a voice for Tonally's voice marketplace, where creators keep 80% of every sale.
   Read `references/selling.md` before going on: it has the creator rules and the listing.
-- **Improve an existing voice** - they have a voice in Tonally already. Ask them to export it:
-  **Settings → License & Advanced → Data → Export settings + profile** saves a
-  `tonally-export-….json`. Then run `node scripts/check-voice.mjs <that file>` to list its voices,
-  and `node scripts/check-voice.mjs extract <that file> "<voice name>"` to pull one out. Continue
-  at step 3 with that voice as the starting point, and keep what already works.
+- **Improve an existing voice** - they have a voice in Tonally already. Ask them to copy it:
+  **Settings → Voice Profile →** the pencil on that voice **→ Rework it with an AI → Copy as voice
+  file**, and paste it here. Save it as a file, keep its name - the link then updates that voice
+  in Tonally, its lessons and reply memory kept - and continue at step 3 with it as the starting
+  point, keeping what already works. If it says `"fromPosts": true`, it was built from posts
+  imported from X: keep that line; it can be improved for their own use, but never sold.
 
 ## 1. Interview
 
@@ -161,8 +162,9 @@ For a voice to sell, the listing comes along and fills in the Sell your voice fo
 
 Without the link (no Node, or another browser), they paste the file instead:
 
-1. Open Tonally's settings → **Voice Profile** → **Add a voice from text**.
-2. Paste the whole file, from `{` to `}`.
+1. Open Tonally's settings → **Voice Profile** → **+ New voice** → **Generate Voice** →
+   **Chat with an AI**.
+2. Paste the whole file, from `{` to `}`, in the last step, and click **Add voice**.
 3. Pick the voice, or give it to one of their accounts under **Accounts**.
 
 For a voice to sell, after adding it: try it on x.com, then **Marketplace → Sell your voice**

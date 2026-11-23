@@ -252,6 +252,8 @@ export function check(data) {
   if (!data.format) warn('format: missing - add "format": "tonally-voice".');
   if (data.version !== undefined && data.version !== 1) warn(`version: ${data.version} - expected 1.`);
   const selling = data.format === 'tonally-voice-submission';
+  // "Copy as voice file" marks a voice built from imported posts: never for sale (references/selling.md).
+  if (selling && data.fromPosts === true) err('fromPosts: this voice was built from imported posts - it can be improved for your own use, but never sold. Write a voice to sell from scratch.');
   checkVoice(data.name, data.voice, selling);
   if (selling) checkListing(data.listing, data.voice);
   return { errors, warnings, selling };
