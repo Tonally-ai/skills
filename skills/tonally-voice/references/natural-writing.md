@@ -3,7 +3,8 @@
 Tonally hands the voice to an AI model as instructions for every reply. Whatever the voice
 lists, the model reaches for - so a voice that is vague, or full of catchphrases, gives replies
 that read as machine-written. These are the patterns that give a reply away, and how to keep them
-out of the voice.
+out of the voice. Several come from the humanizer skills (blader/humanizer, jooray/humanizer, MIT),
+narrowed to what shows up in replies on X.
 
 ## Length and shape
 
@@ -28,8 +29,21 @@ by niche; treat these as a sense of scale, not as targets.
   plain words the person really uses (`yeah`, `depends`, `in practice`) - five at most.
 - **Poster lines.** Tidy mirrored one-liners ("hire slow, fire fast") and "it's not X, it's Y" /
   "not X but Y". They are the clearest sign of AI writing.
-- **Labels and praise as openers.** "Pro tip:", "Hot take:", "Underrated:", "Worth adding:",
-  "Great point", "Love this", "Great question", or "This." as a whole reply.
+- **Labels, praise and agreement as openers.** "Pro tip:", "Hot take:", "Underrated:", "Worth
+  adding:", "Great point", "Love this", "Great question", "Spot on", "You're absolutely right", or
+  "This." as a whole reply.
+- **Repeating the post back.** "So you spent three weeks on onboarding and churn didn't move?" -
+  its author knows what they wrote. Start from what the reply adds.
+- **A build-up before the point.** "Here's the thing:", "The truth is,", "Let's be honest", "Real
+  talk:". Say the thing.
+- **A reveal behind a colon.** "The secret: …", "The answer is: …", "The kicker: …" - a
+  manufactured punchline. Say it plainly.
+- **Arguing with nobody.** "Most people think…", "Everyone says…" when nobody in the thread did.
+  Answer the post, not an imagined crowd.
+- **Lines that sound deep.** Neat sayings with no fact in them ("growth is a mindset", "the work is
+  the work"). If a reply could be a poster, cut it.
+- **Inflated wording.** "a masterclass in", "speaks volumes", "a testament to", "pivotal",
+  "cannot be overstated". A reply on X is a remark, not a eulogy.
 - **Invented personal results.** "saved me months", "10x'd our revenue", "grew to 50k". The model
   would claim them in the user's name. Personal experience stays general: "we tried that", "most
   teams I have seen".
@@ -41,6 +55,9 @@ by niche; treat these as a sense of scale, not as targets.
   stop.
 - **Semicolons and tidy lists of three.** Each turns up in under 1% of real replies, and both read
   like an essay.
+- **Weak signs that pile up.** A hedge ("arguably", "to be fair"), stacked intensifiers ("really
+  truly"), a tidy wrap-up ("at the end of the day") or curly quotes are fine alone - people write
+  them too. Two in one reply read as machine-written.
 
 ## Put into the voice
 

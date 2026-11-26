@@ -13,3 +13,10 @@ Then ask your agent: *"Make me a Tonally voice."*
 | [tonally-voice](skills/tonally-voice/SKILL.md) | Makes a voice for your own replies, one to sell in Tonally's voice marketplace (with its listing), or improves one you exported from Tonally. It interviews you, studies writing samples you point it to, tests the voice on sample posts, checks it with a script, and gives you a one-click link that adds it to Tonally - or a file you paste in (Settings → Voice Profile → + New voice → Generate Voice). |
 
 No agent? The same interview works as a prompt in any AI chat: [tonal.ly/voice-format](https://tonal.ly/voice-format).
+
+## Credits
+
+Several of the patterns the skill keeps out of a voice, and how it reads writing samples, are
+adapted from [blader/humanizer](https://github.com/blader/humanizer) and
+[jooray/humanizer](https://github.com/jooray/humanizer) (MIT), and from the voice-builder skill in
+[charlie947/social-media-skills](https://github.com/charlie947/social-media-skills) (MIT).

@@ -13,7 +13,7 @@
 //                                                     list, or the skill's "Post: … / Reply: …" form
 //
 // Exit code 1 when something must be fixed; warnings alone exit 0. The checks are
-// exported too (check, checkReplies, repliesIn, shapeOf, voicesIn, voiceFile), so they can
+// exported too (check, checkReplies, repliesIn, postsIn, shapeOf, voicesIn, voiceFile), so they can
 // be tested without Node.
 
 const TEXT_FIELDS = ['summary', 'industry', 'emojiPolicy', 'replyGuidelines', 'postGuidelines', 'quoteGuidelines', 'extraContext'];
@@ -71,9 +71,21 @@ const HASHTAG = /(^|\s)#\w{2,}/;
 const EM_DASH = /—/;
 const LABEL = /^\s*(pro tip|quick tip|hot take|unpopular opinion|underrated|worth adding|reminder|psa)\s*[:\-]/i;
 // A reply that opens on praise ("Great point!", "Love this.") or is only "This." - not "love that the fix...".
-const PRAISE = /^\s*(?:(?:great (?:point|question|post|thread|list|take)|love (?:this|that)|so true|well said|couldn'?t agree more)\s*[!.,:]|this[.!]*\s*$)/i;
+const PRAISE = /^\s*(?:(?:great (?:point|question|post|thread|list|take)|love (?:this|that)|so true|well said|couldn'?t agree more|spot on|(?:you'?re|you are) (?:so |absolutely |100% )?right|100% this|this is so (?:true|real|important))\s*[!.,:]|this[.!]*\s*$)/i;
 const NOT_BUT = /\b(it'?s|this is|that'?s) not (just |only |about )?[^.,;!?]{1,40}[,;-]\s*(it'?s|but)\b|\bnot [^.,;!?]{1,30}, but\b/i;
-const STOCK = /\b(game[- ]?changer|delve|leverage|elevate|unlock(ing)? (the|your)|journey|crucial|in today'?s (world|landscape)|let'?s dive|dive in|supercharge|seamless(ly)?|synergy)\b/i;
+const STOCK = /\b(game[- ]?chang(er|ing)|delve|leverage|elevate|unlock(ing)? (the|your)|journey|crucial|in today'?s (world|landscape)|let'?s dive|dive in|supercharge|seamless(ly)?|synergy|testament to|speaks volumes|cannot be overstated|a masterclass in|pivotal|profound)\b/i;
+// Patterns from blader/humanizer and jooray/humanizer (MIT) that show up in replies:
+// a build-up before the point, a reveal behind a colon, and arguing with a view nobody stated.
+const RUNUP = /^\s*(here'?s the thing|the thing is|here'?s why|the truth is|the reality is|let'?s be honest|real talk|fun fact|the irony)\s*[:,.-]/i;
+const REVEAL = /\bthe (answer|secret|trick|key|lesson|catch|kicker|difference|real question|real problem)\s*(is)?\s*:\s*\S/i;
+const STRAWMAN = /^\s*(?:most people (?:think|believe|assume|get this wrong)|everyone (?:says|thinks|assumes)|people (?:think|assume)|contrary to popular belief)\b/i;
+// Weak alone (a person writes them too): flagged only when two turn up in the same reply.
+const WEAK = [
+  ['a hedge', /\b(arguably|perhaps|potentially|it'?s worth noting|it'?s important to (note|remember)|to be fair)\b/i],
+  ['stacked intensifiers', /\b(really|truly|incredibly|absolutely|genuinely)\s+(really|truly|incredibly|absolutely|genuinely|so)\b/i],
+  ['a tidy wrap-up', /\b(at the end of the day|all in all|in short|bottom line)\b/i],
+  ['a curly quote', /[\u201c\u201d\u2018]/],
+];
 const MEME = /(?:^|\W)(nobody:|the audacity|me pretending|plot twist|in this economy|it'?s giving)/i;
 const RESULT = /\b(saved (me|us) (months|weeks|years|hours|days)|\d+x(ed)?\b|\d+(\.\d+)?k (followers|users|mrr|arr|subscribers)|\$\d+(\.\d+)?[km]\b)/i;
 const SENSITIVE = /\b(diagnos\w*|adhd|autis\w*|depress\w*|anxiety disorder|bipolar|cancer|hiv|pregnan\w*|christian|muslim|jewish|hindu|atheist|religio\w*|gay|lesbian|bisexual|transgender|democrat\w*|republican\w*|liberal|conservative|trade union|union member|convicted|criminal record)\b/i;
@@ -111,6 +123,11 @@ function textChecks(where, s, { example = false, selling = false } = {}) {
   if (NOT_BUT.test(s)) warn(`${where}: "not X, it's Y" line - reads as AI: "${short(s)}"`);
   if (MEME.test(s)) warn(`${where}: stock meme format "${s.match(MEME)[1]}": "${short(s)}"`);
   if (CLOSER.test(s)) warn(`${where}: ends on an engagement question - reads as AI: "${short(s)}"`);
+  if (RUNUP.test(s)) warn(`${where}: builds up before the point ("${s.match(RUNUP)[1]}") - start with the point: "${short(s)}"`);
+  if (REVEAL.test(s)) warn(`${where}: a reveal behind a colon ("the ${s.match(REVEAL)[1]}:") - reads as AI; just say it: "${short(s)}"`);
+  if (STRAWMAN.test(s)) warn(`${where}: argues with a view nobody in the thread stated - answer the post instead: "${short(s)}"`);
+  const weak = WEAK.filter(([, re]) => re.test(s)).map(([w]) => w);
+  if (weak.length >= 2) warn(`${where}: ${weak.join(' and ')} together - each is fine alone, together they read as AI: "${short(s)}"`);
   // Text copied from X keeps HTML entities ("&amp;"), whose ";" is not a semicolon.
   if (SEMICOLON.test(s.replace(/&(?:[a-z]+|#\d+);/gi, ' '))) warn(`${where}: a semicolon - under 1% of real replies have one: "${short(s)}"`);
 }
@@ -262,9 +279,23 @@ export function check(data) {
 // A batch of test replies (step 4 of the skill), or a user's own replies: each checked like an
 // example, then the batch for its shape and for openings and phrases it keeps repeating.
 // { errors, warnings, shape }.
-export function checkReplies(list) {
+export function checkReplies(list, posts = []) {
   errors = [];
   warnings = [];
+  // A reply that hands the post back to its author (humanizer's "re-explaining what the
+  // reader knows"): four or more words in a row from the post it answers.
+  const words = (x) => String(x || '').toLowerCase().match(/[a-z0-9']+/g) || [];
+  list.forEach((r, i) => {
+    const p = words(posts[i]);
+    if (p.length < 4) return;
+    const grams = new Set();
+    for (let k = 0; k + 3 < p.length; k++) grams.add(p.slice(k, k + 4).join(' '));
+    const w = words(r);
+    for (let k = 0; k + 3 < w.length; k++) {
+      const g = w.slice(k, k + 4).join(' ');
+      if (grams.has(g)) { warn(`reply ${i + 1}: repeats the post back ("${g}") - its author knows what they wrote; answer it.`); break; }
+    }
+  });
   // Replies copied from X start with the @handles they answer - not part of what was written.
   const replies = list.map((r) => String(r).trim().replace(/^(?:@\w+\s+)+/, '')).filter(Boolean);
   replies.forEach((r, i) => textChecks(`reply ${i + 1}`, r, { example: true }));
@@ -306,6 +337,26 @@ export function repliesIn(text) {
   return out.map((r) => r.trim()).filter(Boolean);
 }
 
+// The post each reply answers, in the same order as repliesIn - '' where the file has none
+// (one reply per line). Lets checkReplies see a reply that repeats its post back.
+export function postsIn(text) {
+  let data = null;
+  try { data = JSON.parse(text); } catch { /* not JSON */ }
+  if (Array.isArray(data)) return data.filter((x) => (x && typeof x === 'object' ? typeof x.reply === 'string' && x.reply.trim() : typeof x === 'string' && x.trim())).map((x) => (x && typeof x === 'object' ? String(x.post || '') : ''));
+  const lines = String(text).split(/\r?\n/);
+  if (!lines.some((l) => /^\s*reply\s*:/i.test(l))) return lines.filter((l) => l.trim()).map(() => '');
+  const out = [];
+  let post = '';
+  let inPost = false;
+  for (const l of lines) {
+    if (/^\s*post\s*:/i.test(l)) { post = l.replace(/^\s*post\s*:\s*/i, ''); inPost = true; }
+    else if (/^\s*reply\s*:/i.test(l)) { out.push(post); inPost = false; }
+    else if (inPost && l.trim()) post += `\n${l}`;
+    else if (!l.trim()) inPost = false;
+  }
+  return out;
+}
+
 const fromPosts = (p) => ['import', 'corpus'].includes(p?.source) || p?.fromPosts === true;
 
 // The voices in a Tonally export (License & Advanced -> Data -> Export settings +
@@ -342,9 +393,10 @@ async function main(args) {
   }
   if (args[0] === 'replies') {
     if (!fs.existsSync(args[1] || '')) return console.error(`✗ No file at ${args[1] || '(none given)'}.`), 1;
-    const list = repliesIn(fs.readFileSync(args[1], 'utf8'));
+    const text = fs.readFileSync(args[1], 'utf8');
+    const list = repliesIn(text);
     if (!list.length) return console.error(`✗ No replies in ${args[1]} - one per line, or "Reply: …" lines.`), 1;
-    const res = checkReplies(list);
+    const res = checkReplies(list, postsIn(text));
     const s = res.shape;
     console.log(`${s.n} replies, real replies in brackets: median ${s.median} characters (${REAL.median}) · under 40 characters ${s.under40}% (${REAL.under40}%) · two or more sentences ${s.multi}% (${REAL.multi}%) · full stop at the end ${s.stop}% (${REAL.stop}%) · a question ${s.ask}% (${REAL.ask}%)`);
     for (const m of res.errors) console.log(`✗ ${m}`);

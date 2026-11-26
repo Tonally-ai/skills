@@ -37,12 +37,22 @@ Ask these one or two at a time and wait for the answers. Skip what the user alre
 5. Words or phrases they use a lot - and ones they would never use.
 6. How do they reply to others: agree and add, challenge, joke, ask a question?
 7. Optional: things they wrote - pasted into the chat, or files and folders they point you to
-   (notes, blog posts, newsletters). Read only the files they point you to, and learn the *style*
-   from them - length, rhythm, punctuation, vocabulary, how they open and close - not the content.
-   If they include replies, save them to a file, one per line, and run
+   (notes, blog posts, newsletters). Read only the files they point you to. Three or more pieces
+   work best. If they include replies, save them to a file, one per line, and run
    `node scripts/check-voice.mjs replies <that file>`: its first line gives their typical length,
    full stops and questions, to write into the rules as numbers. Keep reply habits apart from post
    habits - posts usually run several times longer.
+
+   **Reading the samples.** Take the manner, never the content: how long, how they open and
+   close, punctuation, capitals, vocabulary, rhythm - but no facts, names, numbers or stories from
+   the samples go into the voice or its examples. Note:
+   - **What they do**, with counts where you can ("lowercase starts in 4 of 5").
+   - **What they never do** ("no dashes in 0 of 5", "never a question"). With only a few samples
+     these are provisional - write them as "rarely" rather than "never" unless the user confirms.
+   - **Where samples disagree** (short and lowercase in one, long and formal in another): ask
+     which is the voice, or keep both with when each applies - don't average them.
+   - **What came from the interview and what came from the samples.** If they clash ("I'm
+     blunt" but the samples are gentle), ask - the samples are usually right about style.
 
 For a voice **to sell**, also ask: who would buy it, and in which situations would they use it?
 
@@ -65,9 +75,11 @@ For a voice **to sell**, also ask: who would buy it, and in which situations wou
 
 Read `references/natural-writing.md` and follow it. In short: rules concrete enough that a
 stranger could imitate the voice from them alone; a short, plain vocabulary (no catchphrases);
-no poster lines like "hire slow, fire fast" or "it's not X, it's Y"; no "Pro tip:" labels or
-"Great point!" openers; no invented personal results like "saved me months"; examples that vary
-in length and opening and pick up a detail from the post they answer. And the shape of real
+no poster lines like "hire slow, fire fast" or "it's not X, it's Y"; no "Pro tip:" labels,
+"Great point!" or "You're absolutely right" openers; no build-up before the point ("Here's the
+thing:"), no reveal behind a colon ("The secret: …"); no repeating the post back to its author;
+no invented personal results like "saved me months"; examples that vary in length and opening
+and pick up a detail from the post they answer. And the shape of real
 replies: a length mix rather than one range, 2 or 3 examples of only a few words, one sentence
 by default, and different kinds of reply rather than the same move every time.
 
@@ -84,7 +96,12 @@ frustrated post, something light, and a couple where a few words is the right re
 
 Save them to a file in that same form and run `node scripts/check-voice.mjs replies <that file>`.
 It flags a batch that is all long, all one shape or keeps opening the same way - patterns no
-single reply shows. Fix the rules behind anything it flags before showing the user.
+single reply shows - and a reply that repeats its post back. Fix the rules behind anything it
+flags before showing the user.
+
+Then read each reply once more as the post's author would: does it start from something new,
+or from what they just wrote? Does it argue with something nobody said? Would it still make
+sense under a different post? Fix the rules behind any yes.
 
 Ask the user to point at anything that does not sound like them (or, for a voice to sell, like
 the voice they want). Fix the **rules** that caused it, not just that one reply, and test again.
